@@ -74,6 +74,7 @@
 - 2026-05-07: تم بناء نسخة v7 لإصلاح تداخل عنوان الدردشة العلوي مع زر `...` عبر حجز مساحة على مستوى صف الدردشة الأب.
 - 2026-05-07: تم بناء نسخة v9 بحذف التأثير البصري التجريبي بالكامل، وتضييق استثناءات LTR لمنع تداخل أيقونات الهيدر مع إبقاء عنوان الدردشة RTL.
 - 2026-05-07: تم تجهيز حفظ Git/GitHub للحل: `.gitignore`، و`tools/github-autopush.ps1`، و`.githooks/post-commit`، و`README.md`.
+- 2026-05-07: تم تهيئة Git محليًا على الفرع `main`، وتفعيل `core.hooksPath=.githooks`، وإنشاء أول commit محلي `b34d620`. الدفع إلى GitHub مؤجل حتى ضبط remote `origin`.
 
 [ORPHANS & PENDING]
 - ربط GitHub الفعلي ينتظر remote بصيغة `origin` مثل `https://github.com/OWNER/REPO.git` لأن هذا المجلد لم يكن مستودع GitHub قبل الإعداد.
