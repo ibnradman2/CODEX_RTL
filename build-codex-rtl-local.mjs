@@ -104,35 +104,53 @@ const RTL_INJECTION = String.raw`
         min-width: 0;
       }
 
-      nav[aria-label] .h-token-nav-row {
+      nav[aria-label] button.h-token-nav-row {
         direction: rtl;
         text-align: right;
         unicode-bidi: isolate;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
         overflow: hidden;
       }
 
-      nav[aria-label] .h-token-nav-row,
-      nav[aria-label] .h-token-nav-row * {
+      nav[aria-label] button.h-token-nav-row,
+      nav[aria-label] button.h-token-nav-row * {
         min-width: 0;
       }
 
-      nav[aria-label] .h-token-nav-row svg,
-      nav[aria-label] .h-token-nav-row [class*="icon-"] {
+      nav[aria-label] button.h-token-nav-row > div:first-child {
+        flex: 1 1 auto;
+        justify-content: flex-start;
+        overflow: hidden;
+      }
+
+      nav[aria-label] button.h-token-nav-row svg,
+      nav[aria-label] button.h-token-nav-row [class*="icon-"] {
         flex: 0 0 auto;
       }
 
-      nav[aria-label] .h-token-nav-row [aria-hidden="true"] {
+      nav[aria-label] button.h-token-nav-row > span[aria-hidden="true"] {
         direction: ltr;
         unicode-bidi: isolate;
-        flex: 0 0 auto;
-        margin-inline-start: auto;
+        display: none !important;
       }
 
-      nav[aria-label] .h-token-nav-row > span,
-      nav[aria-label] .h-token-nav-row span:not([aria-hidden="true"]) {
+      nav[aria-label] button.h-token-nav-row > div:first-child > span,
+      nav[aria-label] button.h-token-nav-row span:not([aria-hidden="true"]) {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+
+      nav[aria-label] button.h-token-nav-row:has(.disambiguated-digits) {
+        padding-right: var(--padding-row-x) !important;
+        padding-left: calc(var(--padding-row-x) + 1.75rem) !important;
+      }
+
+      nav[aria-label] button.h-token-nav-row .disambiguated-digits {
+        right: auto !important;
+        left: var(--padding-row-x) !important;
       }
 
       nav[aria-label] [role="listitem"] svg,
