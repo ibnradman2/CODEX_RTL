@@ -104,6 +104,10 @@ const RTL_INJECTION = String.raw`
         min-width: 0;
       }
 
+      nav.sidebar-foreground-muted > .shrink-0.px-row-x {
+        padding-top: var(--height-toolbar, 46px);
+      }
+
       nav[aria-label] button.h-token-nav-row {
         direction: rtl;
         text-align: right;
