@@ -49,7 +49,9 @@
   - اختصار سطح المكتب `Codex RTL.lnk` يستدعي `launch-codex-rtl-local.vbs` ثم `launch-codex-rtl-local.ps1`.
   - المشغل المحلي يغلق عمليات تطبيق `Codex.exe` القديمة فقط ثم يفتح النسخة المحلية المعدلة، لتجاوز single-instance lock.
   - Git المحلي يستخدم `.gitignore` لمنع رفع نسخ التطبيق الثقيلة، و`tools/github-autopush.ps1` لتنفيذ commit/push عند وجود remote باسم `origin`.
-  - Git hook في `.githooks/post-commit` يحاول الدفع تلقائيًا بعد كل commit، ولا يعطل commit إذا لم يكن remote مضبوطًا.
+  - Git hook في `.githooks/post-commit` يحاول الدفع تلقائيًا بعد كل commit إلى `origin/main`، ولا يعطل commit إذا تعذر الدفع.
+  - remote `origin` مضبوط على:
+    `https://github.com/ibnradman2/CODEX_RTL.git`
   - إعداد `localeOverride` في حالة Codex المحلية موجود بالفعل بقيمة `ar`.
   - تم تنظيف صلاحية ACL الزائدة التي أضيفت أثناء محاولة الترقيع، ولم يبق تعديل على ملف `app.asar`.
 
@@ -74,10 +76,10 @@
 - 2026-05-07: تم بناء نسخة v7 لإصلاح تداخل عنوان الدردشة العلوي مع زر `...` عبر حجز مساحة على مستوى صف الدردشة الأب.
 - 2026-05-07: تم بناء نسخة v9 بحذف التأثير البصري التجريبي بالكامل، وتضييق استثناءات LTR لمنع تداخل أيقونات الهيدر مع إبقاء عنوان الدردشة RTL.
 - 2026-05-07: تم تجهيز حفظ Git/GitHub للحل: `.gitignore`، و`tools/github-autopush.ps1`، و`.githooks/post-commit`، و`README.md`.
-- 2026-05-07: تم تهيئة Git محليًا على الفرع `main`، وتفعيل `core.hooksPath=.githooks`، وإنشاء أول commit محلي `b34d620`. الدفع إلى GitHub مؤجل حتى ضبط remote `origin`.
+- 2026-05-07: تم تهيئة Git محليًا على الفرع `main`، وتفعيل `core.hooksPath=.githooks`، وإنشاء أول commit محلي `b34d620`.
+- 2026-05-07: تم ربط remote `origin` بالمستودع `https://github.com/ibnradman2/CODEX_RTL.git` ودفع `main` إلى GitHub بنجاح.
 
 [ORPHANS & PENDING]
-- ربط GitHub الفعلي ينتظر remote بصيغة `origin` مثل `https://github.com/OWNER/REPO.git` لأن هذا المجلد لم يكن مستودع GitHub قبل الإعداد.
 - التحقق البصري بعد فتح اختصار `Codex RTL` المحدث إلى v9. عند الضغط عليه سيغلق نافذة Codex الحالية ثم يفتح النسخة المحلية المعدلة. يجب ألا يظهر أي تأثير بصري تجريبي، ويجب ألا تتداخل أيقونات أعلى اليمين، ويجب أن يظهر عنوان الدردشة RTL في مكانه.
 - مجلد `_codex_rtl_app_v8` نسخة مولدة قديمة وغير مستخدمة بعد v9، لكن حذفه تعذر لأن التطبيق الحالي يقفل ملفًا داخله. يمكن حذفه بعد فتح v9 أو إغلاق Codex بالكامل.
 - عند تحديث Codex الرسمي، يجب إعادة تشغيل `build-codex-rtl-local.mjs` لإعادة بناء النسخة المحلية من الإصدار الجديد.

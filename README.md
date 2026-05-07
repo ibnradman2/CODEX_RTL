@@ -16,10 +16,16 @@
 
 ## ربط GitHub
 
-بعد إنشاء مستودع GitHub فارغ، اربطه مرة واحدة:
+المستودع الحالي مربوط بـ:
+
+```text
+https://github.com/ibnradman2/CODEX_RTL.git
+```
+
+إذا احتجت إعادة الربط من جديد:
 
 ```powershell
-git remote add origin https://github.com/OWNER/REPO.git
+git remote add origin https://github.com/ibnradman2/CODEX_RTL.git
 .\tools\github-autopush.ps1 -Commit -Message "Update Codex RTL solution"
 ```
 
