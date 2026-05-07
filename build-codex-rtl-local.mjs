@@ -9,9 +9,10 @@ const LOCAL_ROOT = process.env.CODEX_RTL_LOCAL_ROOT
   : path.join(REPO_ROOT, "_codex_rtl_app");
 const LOCAL_APP = path.join(LOCAL_ROOT, "app");
 const TARGET = "/webview/index.html";
+const HEAD_BOOTSTRAP_MARKER = "    <script type=\"module\"";
 
-const RTL_INJECTION = String.raw`
-    <script>
+const RTL_BOOT_INJECTION = String.raw`
+    <script id="codex-rtl-boot-script">
       (() => {
         const applyCodexRtl = () => {
           document.documentElement.setAttribute("dir", "rtl");
@@ -24,6 +25,15 @@ const RTL_INJECTION = String.raw`
         });
       })();
     </script>
+    <style id="codex-rtl-boot-patch">
+      html,
+      body,
+      #root {
+        direction: rtl !important;
+      }
+    </style>`;
+
+const RTL_INJECTION = String.raw`
     <style id="codex-rtl-local-patch">
       html,
       body,
@@ -52,9 +62,21 @@ const RTL_INJECTION = String.raw`
         unicode-bidi: isolate;
       }
 
+      [data-test-id="header-shell-slot"] {
+        overflow: hidden;
+      }
+
+      [data-test-id="header-shell-slot"] > div {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+      }
+
       [data-test-id="header-shell-slot"] button,
       [data-test-id="header-shell-slot"] [role="button"] {
-        flex: 0 0 auto;
+        min-width: 0;
+        max-width: 100%;
+        flex-shrink: 1;
       }
 
       [data-app-shell-header-edge-scroll] .text-md {
@@ -80,6 +102,37 @@ const RTL_INJECTION = String.raw`
       nav[aria-label] [role="listitem"] button,
       nav[aria-label] [role="listitem"] a {
         min-width: 0;
+      }
+
+      nav[aria-label] .h-token-nav-row {
+        direction: rtl;
+        text-align: right;
+        unicode-bidi: isolate;
+        overflow: hidden;
+      }
+
+      nav[aria-label] .h-token-nav-row,
+      nav[aria-label] .h-token-nav-row * {
+        min-width: 0;
+      }
+
+      nav[aria-label] .h-token-nav-row svg,
+      nav[aria-label] .h-token-nav-row [class*="icon-"] {
+        flex: 0 0 auto;
+      }
+
+      nav[aria-label] .h-token-nav-row [aria-hidden="true"] {
+        direction: ltr;
+        unicode-bidi: isolate;
+        flex: 0 0 auto;
+        margin-inline-start: auto;
+      }
+
+      nav[aria-label] .h-token-nav-row > span,
+      nav[aria-label] .h-token-nav-row span:not([aria-hidden="true"]) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       nav[aria-label] [role="listitem"] svg,
@@ -253,7 +306,16 @@ function injectRtl(html) {
     throw new Error("Expected HTML marker was not found.");
   }
 
-  return withLang.replace("</head>", `${RTL_INJECTION}\n  </head>`);
+  if (!withLang.includes(HEAD_BOOTSTRAP_MARKER)) {
+    throw new Error("Expected app bootstrap marker was not found.");
+  }
+
+  const withBootPatch = withLang.replace(
+    HEAD_BOOTSTRAP_MARKER,
+    `${RTL_BOOT_INJECTION}\n${HEAD_BOOTSTRAP_MARKER}`,
+  );
+
+  return withBootPatch.replace("</head>", `${RTL_INJECTION}\n  </head>`);
 }
 
 async function rebuildAsar(sourceAsar, targetAsar) {
