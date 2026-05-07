@@ -4,7 +4,20 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSCommandPath
-$localApp = Join-Path $root "_codex_rtl_app\app"
+$currentPath = Join-Path $root "_codex_rtl_current.txt"
+if (Test-Path -LiteralPath $currentPath) {
+  $localRootName = (Get-Content -LiteralPath $currentPath -TotalCount 1).Trim()
+} else {
+  $localRootName = "_codex_rtl_app"
+}
+
+if ([System.IO.Path]::IsPathRooted($localRootName)) {
+  $localRoot = $localRootName
+} else {
+  $localRoot = Join-Path $root $localRootName
+}
+
+$localApp = Join-Path $localRoot "app"
 $localExe = Join-Path $localApp "Codex.exe"
 $localAsar = Join-Path $localApp "resources\app.asar"
 $logPath = Join-Path $root "_handoff\launch-codex-rtl-error.log"

@@ -4,7 +4,9 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = path.dirname(fileURLToPath(import.meta.url));
-const LOCAL_ROOT = path.join(REPO_ROOT, "_codex_rtl_app");
+const LOCAL_ROOT = process.env.CODEX_RTL_LOCAL_ROOT
+  ? path.resolve(process.env.CODEX_RTL_LOCAL_ROOT)
+  : path.join(REPO_ROOT, "_codex_rtl_app");
 const LOCAL_APP = path.join(LOCAL_ROOT, "app");
 const TARGET = "/webview/index.html";
 
@@ -43,6 +45,7 @@ const RTL_INJECTION = String.raw`
         unicode-bidi: isolate;
       }
 
+      [data-app-shell-header-edge-scroll],
       [data-test-id="header-shell-slot"],
       [data-test-id="header-shell-slot"] > div {
         direction: ltr;
@@ -54,11 +57,16 @@ const RTL_INJECTION = String.raw`
         flex: 0 0 auto;
       }
 
-      [data-app-shell-header-edge-scroll] .text-md,
+      [data-app-shell-header-edge-scroll] .text-md {
+        direction: ltr;
+        text-align: left;
+        unicode-bidi: isolate;
+      }
+
       [data-app-shell-header-edge-scroll] [class*="max-w-[320px]"] {
         direction: rtl;
         text-align: right;
-        unicode-bidi: plaintext;
+        unicode-bidi: isolate;
       }
 
       [role="tooltip"],
@@ -83,13 +91,14 @@ const RTL_INJECTION = String.raw`
         min-width: 0;
         direction: rtl;
         text-align: right;
+        unicode-bidi: isolate;
         box-sizing: border-box;
       }
 
       [data-thread-title] {
         direction: rtl;
         text-align: right;
-        unicode-bidi: plaintext;
+        unicode-bidi: isolate;
       }
 
       [role="button"]:has([data-thread-title]) {
