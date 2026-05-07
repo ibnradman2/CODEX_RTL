@@ -52,6 +52,7 @@
   - Git hook في `.githooks/post-commit` يحاول الدفع تلقائيًا بعد كل commit إلى `origin/main`، ولا يعطل commit إذا تعذر الدفع.
   - remote `origin` مضبوط على:
     `https://github.com/ibnradman2/CODEX_RTL.git`
+  - يوجد تشغيل دوري في Codex App باسم `Codex RTL GitHub autopush` ومعرفه `codex-rtl-github-autopush` يفحص المستودع كل ساعة ويدفع التغييرات المسموحة إلى GitHub.
   - إعداد `localeOverride` في حالة Codex المحلية موجود بالفعل بقيمة `ar`.
   - تم تنظيف صلاحية ACL الزائدة التي أضيفت أثناء محاولة الترقيع، ولم يبق تعديل على ملف `app.asar`.
 
@@ -78,6 +79,7 @@
 - 2026-05-07: تم تجهيز حفظ Git/GitHub للحل: `.gitignore`، و`tools/github-autopush.ps1`، و`.githooks/post-commit`، و`README.md`.
 - 2026-05-07: تم تهيئة Git محليًا على الفرع `main`، وتفعيل `core.hooksPath=.githooks`، وإنشاء أول commit محلي `b34d620`.
 - 2026-05-07: تم ربط remote `origin` بالمستودع `https://github.com/ibnradman2/CODEX_RTL.git` ودفع `main` إلى GitHub بنجاح.
+- 2026-05-07: تم إنشاء automation دوري `codex-rtl-github-autopush` لتشغيل الحفظ إلى GitHub كل ساعة كطبقة احتياطية فوق hook ما بعد commit.
 
 [ORPHANS & PENDING]
 - التحقق البصري بعد فتح اختصار `Codex RTL` المحدث إلى v9. عند الضغط عليه سيغلق نافذة Codex الحالية ثم يفتح النسخة المحلية المعدلة. يجب ألا يظهر أي تأثير بصري تجريبي، ويجب ألا تتداخل أيقونات أعلى اليمين، ويجب أن يظهر عنوان الدردشة RTL في مكانه.
