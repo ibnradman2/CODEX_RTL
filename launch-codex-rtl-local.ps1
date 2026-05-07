@@ -3,8 +3,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = "C:\Users\ibnra.DESKTOP-A17OJSP\Documents\Codex\2026-05-07\rtl"
-$localApp = Join-Path $root "_codex_rtl_app_v9\app"
+$root = Split-Path -Parent $PSCommandPath
+$localApp = Join-Path $root "_codex_rtl_app\app"
 $localExe = Join-Path $localApp "Codex.exe"
 $localAsar = Join-Path $localApp "resources\app.asar"
 $logPath = Join-Path $root "_handoff\launch-codex-rtl-error.log"

@@ -1,14 +1,11 @@
-import { cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
 
-const SOURCE_APP =
-  "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.429.8261.0_x64__2p2nqsd0c76g0\\app";
-const LOCAL_ROOT =
-  "C:\\Users\\ibnra.DESKTOP-A17OJSP\\Documents\\Codex\\2026-05-07\\rtl\\_codex_rtl_app_v9";
+const REPO_ROOT = path.dirname(fileURLToPath(import.meta.url));
+const LOCAL_ROOT = path.join(REPO_ROOT, "_codex_rtl_app");
 const LOCAL_APP = path.join(LOCAL_ROOT, "app");
-const SOURCE_ASAR = path.join(SOURCE_APP, "resources", "app.asar");
-const LOCAL_ASAR = path.join(LOCAL_APP, "resources", "app.asar");
 const TARGET = "/webview/index.html";
 
 const RTL_INJECTION = String.raw`
@@ -126,6 +123,72 @@ const RTL_INJECTION = String.raw`
       }
     </style>`;
 
+async function assertCodexApp(appPath) {
+  const exePath = path.join(appPath, "Codex.exe");
+  const asarPath = path.join(appPath, "resources", "app.asar");
+  await stat(exePath);
+  await stat(asarPath);
+  return { exePath, asarPath };
+}
+
+function parseVersionFromPackageName(name) {
+  const match = /^OpenAI\.Codex_(\d+)\.(\d+)\.(\d+)\.(\d+)_/.exec(name);
+  if (!match) return [0, 0, 0, 0];
+  return match.slice(1).map((part) => Number.parseInt(part, 10));
+}
+
+function compareVersionsDesc(left, right) {
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    const diff = (right[index] ?? 0) - (left[index] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+async function findCodexApp() {
+  const explicitSource = process.env.CODEX_RTL_SOURCE_APP;
+  if (explicitSource) {
+    const explicitApp = path.resolve(explicitSource);
+    await assertCodexApp(explicitApp);
+    return explicitApp;
+  }
+
+  const windowsApps = path.join(process.env.ProgramFiles ?? "C:\\Program Files", "WindowsApps");
+  let entries;
+  try {
+    entries = await readdir(windowsApps, { withFileTypes: true });
+  } catch (error) {
+    throw new Error(`Cannot read WindowsApps folder: ${windowsApps}. ${error.message}`);
+  }
+
+  const candidates = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith("OpenAI.Codex_")) continue;
+    const appPath = path.join(windowsApps, entry.name, "app");
+    try {
+      await assertCodexApp(appPath);
+      candidates.push({
+        appPath,
+        name: entry.name,
+        version: parseVersionFromPackageName(entry.name),
+      });
+    } catch {
+      // Some AppX folders can be partial or inaccessible; ignore non-runnable candidates.
+    }
+  }
+
+  candidates.sort((left, right) => {
+    const versionSort = compareVersionsDesc(left.version, right.version);
+    return versionSort !== 0 ? versionSort : right.name.localeCompare(left.name);
+  });
+
+  if (candidates.length === 0) {
+    throw new Error(`Codex Desktop was not found under ${windowsApps}. Install Codex first.`);
+  }
+
+  return candidates[0].appPath;
+}
+
 function parseAsar(buffer) {
   const headerSize = buffer.readUInt32LE(12);
   const headerStart = 16;
@@ -239,21 +302,23 @@ async function patchExecutableAsarIntegrity(executablePath, asarHeaderHash) {
 }
 
 async function main() {
-  await stat(SOURCE_ASAR);
+  const sourceApp = await findCodexApp();
+  const sourceAsar = path.join(sourceApp, "resources", "app.asar");
+  const localAsar = path.join(LOCAL_APP, "resources", "app.asar");
+
+  await stat(sourceAsar);
   await rm(LOCAL_ROOT, { recursive: true, force: true });
   await mkdir(LOCAL_ROOT, { recursive: true });
-  await cp(SOURCE_APP, LOCAL_APP, { recursive: true, preserveTimestamps: true });
-  const asarHeaderHash = await rebuildAsar(SOURCE_ASAR, LOCAL_ASAR);
-  const integrityPatch = await patchExecutableAsarIntegrity(
-    path.join(LOCAL_APP, "Codex.exe"),
-    asarHeaderHash,
-  );
+  await cp(sourceApp, LOCAL_APP, { recursive: true, preserveTimestamps: true });
+  const asarHeaderHash = await rebuildAsar(sourceAsar, localAsar);
+  const localExe = path.join(LOCAL_APP, "Codex.exe");
+  const integrityPatch = await patchExecutableAsarIntegrity(localExe, asarHeaderHash);
 
   console.log(JSON.stringify({
-    sourceApp: SOURCE_APP,
+    sourceApp,
     localApp: LOCAL_APP,
-    localExe: path.join(LOCAL_APP, "Codex.exe"),
-    localAsar: LOCAL_ASAR,
+    localExe,
+    localAsar,
     integrityPatch,
   }, null, 2));
 }

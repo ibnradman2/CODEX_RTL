@@ -4,6 +4,7 @@
 
 ## الملفات المهمة
 
+- `setup-codex-rtl.ps1`: إعداد كامل لجهاز جديد؛ يكتشف Codex الرسمي، يبني نسخة RTL، وينشئ الاختصار.
 - `build-codex-rtl-local.mjs`: يعيد بناء نسخة محلية معدلة من تطبيق Codex الرسمي.
 - `launch-codex-rtl-local.ps1`: يفتح النسخة المحلية المعدلة.
 - `create-codex-rtl-shortcut.vbs`: يحدث اختصار سطح المكتب.
@@ -12,7 +13,21 @@
 
 ## ما لا يرفع إلى GitHub
 
-النسخ المحلية الثقيلة مثل `_codex_rtl_app_v9` لا ترفع. يمكن إعادة بنائها من السكربت.
+النسخ المحلية الثقيلة مثل `_codex_rtl_app` لا ترفع. يمكن إعادة بنائها من السكربت.
+
+## إعداد جهاز جديد
+
+بعد تثبيت Codex الرسمي على الجهاز الجديد:
+
+```powershell
+git clone https://github.com/ibnradman2/CODEX_RTL.git
+cd CODEX_RTL
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup-codex-rtl.ps1
+```
+
+بعد انتهاء السكربت افتح اختصار سطح المكتب `Codex RTL`.
+
+السكربت لا يحتاج Node مثبتًا مسبقًا. إذا لم يجد `node.exe` في النظام، ينسخ نسخة Node المرفقة مع Codex إلى `_codex_rtl_tools` ويستخدمها محليًا.
 
 ## ربط GitHub
 
