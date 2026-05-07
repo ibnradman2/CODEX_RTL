@@ -1,0 +1,3 @@
+#!/bin/sh
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/github-autopush.ps1 -PushOnly -FromHook >/dev/null 2>&1 || true
+exit 0

@@ -1,0 +1,6 @@
+_codex_rtl_app*/
+_handoff/*.log
+*.log
+node_modules/
+Thumbs.db
+Desktop.ini
