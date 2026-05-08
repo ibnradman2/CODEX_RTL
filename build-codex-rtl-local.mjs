@@ -120,6 +120,40 @@ const RTL_INJECTION = String.raw`
         flex: 0 0 auto;
       }
 
+      .h-toolbar-pane:has(.group\/address-bar),
+      .h-toolbar-pane:has(.group\/address-bar) > .draggable {
+        direction: ltr;
+        unicode-bidi: isolate;
+      }
+
+      .h-toolbar-pane:has(.group\/address-bar) > .draggable,
+      .h-toolbar-pane:has(.group\/address-bar) > .draggable > * {
+        min-width: 0;
+      }
+
+      .h-toolbar-pane:has(.group\/address-bar) .group\/address-bar {
+        direction: ltr;
+        unicode-bidi: isolate;
+        min-width: 0;
+        max-width: min(770px, 100%);
+      }
+
+      .h-toolbar-pane:has(.group\/address-bar) .group\/address-bar input {
+        direction: ltr !important;
+        text-align: left !important;
+        unicode-bidi: plaintext !important;
+        min-width: 0;
+      }
+
+      .h-toolbar-pane:has(.group\/address-bar) .group\/address-bar [aria-hidden="true"],
+      .h-toolbar-pane:has(.group\/address-bar) .group\/address-bar svg,
+      .h-toolbar-pane:has(.group\/address-bar) [data-browser-sidebar-open-external],
+      .h-toolbar-pane:has(.group\/address-bar) [data-browser-sidebar-skip-address-commit] {
+        direction: ltr;
+        unicode-bidi: isolate;
+        flex: 0 0 auto;
+      }
+
       [role="tooltip"],
       [data-radix-popper-content-wrapper] {
         direction: rtl;
