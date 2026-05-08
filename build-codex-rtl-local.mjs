@@ -91,6 +91,35 @@ const RTL_INJECTION = String.raw`
         unicode-bidi: isolate;
       }
 
+      [data-tab-id],
+      [data-tab-id] [role="tab"] {
+        direction: ltr;
+        unicode-bidi: isolate;
+        min-width: 0;
+      }
+
+      [data-tab-id] [role="tab"] {
+        overflow: hidden;
+      }
+
+      [data-tab-id] [role="tab"] span:not([aria-hidden="true"]):not(.icon-xs) {
+        direction: rtl;
+        text-align: right;
+        unicode-bidi: isolate;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      [data-tab-id] [aria-hidden="true"],
+      [data-tab-id] svg {
+        direction: ltr;
+        unicode-bidi: isolate;
+        flex: 0 0 auto;
+      }
+
       [role="tooltip"],
       [data-radix-popper-content-wrapper] {
         direction: rtl;
