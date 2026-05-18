@@ -7,6 +7,7 @@
 - `setup-codex-rtl.ps1`: إعداد كامل لجهاز جديد؛ يكتشف Codex الرسمي، يبني نسخة RTL، وينشئ الاختصار.
 - `build-codex-rtl-local.mjs`: يعيد بناء نسخة محلية معدلة من تطبيق Codex الرسمي.
 - `launch-codex-rtl-local.ps1`: يفتح النسخة المحلية المعدلة.
+- `launch-codex-rtl-local.cmd`: مشغل واضح لاختصار سطح المكتب، يستدعي سكربت PowerShell.
 - `create-codex-rtl-shortcut.vbs`: يحدث اختصار سطح المكتب.
 - `_handoff/PROJECT_MAP.md`: خريطة الحالة والقرارات.
 - `tools/github-autopush.ps1`: يعمل commit ثم push تلقائيًا عند وجود remote باسم `origin`.
@@ -22,13 +23,23 @@
 
 ```powershell
 git clone https://github.com/ibnradman2/CODEX_RTL.git
-cd CODEX_RTL
+Move-Item .\CODEX_RTL C:\CODEX_RTL
+cd C:\CODEX_RTL
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup-codex-rtl.ps1
 ```
 
 بعد انتهاء السكربت افتح اختصار سطح المكتب `Codex RTL`.
 
-السكربت لا يحتاج Node مثبتًا مسبقًا. إذا لم يجد `node.exe` في النظام، ينسخ نسخة Node المرفقة مع Codex إلى `_codex_rtl_tools` ويستخدمها محليًا.
+السكربت لا يحتاج Node مثبتًا مسبقًا. إذا وجد `node.exe` غير قابل للتشغيل، مثل نسخة داخل `WindowsApps` على ويندوز 11، يتجاوزه وينسخ نسخة Node المرفقة مع Codex إلى `_codex_rtl_tools` ويستخدمها محليًا.
+
+على ويندوز 11 يفضل تشغيل المشروع من `C:\CODEX_RTL` لتجنب مشاكل المسارات الطويلة أو المسارات التي تحتوي مسافات.
+
+إذا أغلق الاختصار بدون ظهور نافذة، راجع:
+
+```text
+C:\CODEX_RTL\_handoff\launch-codex-rtl.log
+C:\CODEX_RTL\_handoff\launch-codex-rtl-error.log
+```
 
 ## ربط GitHub
 

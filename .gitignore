@@ -1,6 +1,8 @@
 _codex_rtl_app*/
 _codex_rtl_tools/
+_codex_rtl_user_data/
 _codex_rtl_current.txt
+_codex_rtl_source.json
 %SystemDrive%/
 _handoff/*.log
 *.log

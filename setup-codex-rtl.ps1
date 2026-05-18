@@ -61,8 +61,19 @@ function Find-CodexSourceApp {
 function Find-NodeExe {
   param([string]$SourceApp)
 
+  function Test-NodeExe {
+    param([string]$NodePath)
+
+    try {
+      & $NodePath --version *> $null
+      return $LASTEXITCODE -eq 0
+    } catch {
+      return $false
+    }
+  }
+
   $nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
-  if ($nodeCommand) {
+  if ($nodeCommand -and (Test-NodeExe -NodePath $nodeCommand.Source)) {
     return $nodeCommand.Source
   }
 
@@ -72,7 +83,9 @@ function Find-NodeExe {
     New-Item -ItemType Directory -Path $toolDir -Force | Out-Null
     $localNode = Join-Path $toolDir "node.exe"
     Copy-Item -LiteralPath $bundledNode -Destination $localNode -Force
-    return $localNode
+    if (Test-NodeExe -NodePath $localNode) {
+      return $localNode
+    }
   }
 
   throw "Node.js was not found. Codex bundled node.exe and system node.exe are both unavailable."
@@ -83,6 +96,7 @@ $nodeExe = Find-NodeExe -SourceApp $sourceApp
 $buildName = "_codex_rtl_app_" + (Get-Date -Format "yyyyMMddHHmmss")
 $localRoot = Join-Path $root $buildName
 $env:CODEX_RTL_SOURCE_APP = $sourceApp
+$env:CODEX_RTL_SOURCE_VERSION = (Split-Path -Parent $sourceApp | Split-Path -Leaf) -replace '^OpenAI\.Codex_', ''
 $env:CODEX_RTL_LOCAL_ROOT = $localRoot
 
 & $nodeExe (Join-Path $root "build-codex-rtl-local.mjs")

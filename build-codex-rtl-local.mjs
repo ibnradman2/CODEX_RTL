@@ -10,18 +10,179 @@ const LOCAL_ROOT = process.env.CODEX_RTL_LOCAL_ROOT
 const LOCAL_APP = path.join(LOCAL_ROOT, "app");
 const TARGET = "/webview/index.html";
 const HEAD_BOOTSTRAP_MARKER = "    <script type=\"module\"";
+const SOURCE_VERSION = process.env.CODEX_RTL_SOURCE_VERSION || (
+  process.env.CODEX_RTL_SOURCE_APP?.match(/OpenAI\.Codex_([^\\\/]+?)(?:_[^\\\/]+)?[\\\/]app$/)?.[1] ?? "unknown"
+);
 
 const RTL_BOOT_INJECTION = String.raw`
     <script id="codex-rtl-boot-script">
       (() => {
+        const sourceVersion = ${JSON.stringify(SOURCE_VERSION)};
         const applyCodexRtl = () => {
           document.documentElement.setAttribute("dir", "rtl");
           document.documentElement.setAttribute("lang", "ar");
+        };
+        const setImportant = (element, property, value) => {
+          element.style.setProperty(property, value, "important");
+        };
+        const enforceCodexRtlPanelLayout = () => {
+          let applied = false;
+          const targets = Array.from(document.querySelectorAll([
+            ".app-shell-main-content-viewport",
+            ".app-shell-main-content-frame",
+            '[data-app-shell-main-content-layout]',
+            '[data-app-shell-focus-area="right-panel"]',
+          ].join(",")));
+
+          for (const element of targets) {
+            if (!(element instanceof HTMLElement)) continue;
+            setImportant(element, "direction", "rtl");
+            setImportant(element, "text-align", "right");
+            setImportant(element, "unicode-bidi", "isolate");
+            setImportant(element, "min-width", "0");
+            applied = true;
+          }
+
+          const editableTargets = Array.from(document.querySelectorAll([
+            ".app-shell-main-content-viewport textarea",
+            ".app-shell-main-content-viewport input",
+            '.app-shell-main-content-viewport [contenteditable="true"]',
+          ].join(",")));
+
+          for (const element of editableTargets) {
+            if (!(element instanceof HTMLElement)) continue;
+            setImportant(element, "direction", "rtl");
+            setImportant(element, "text-align", "right");
+            setImportant(element, "unicode-bidi", "plaintext");
+            applied = true;
+          }
+
+          return applied;
+        };
+        const findCodexSidebarContainer = () => {
+          const nav =
+            document.querySelector("nav.sidebar-foreground-muted") ||
+            Array.from(document.querySelectorAll('nav[role="navigation"]')).find((candidate) =>
+              candidate instanceof HTMLElement && candidate.querySelector("button.h-token-nav-row")
+            );
+          if (!(nav instanceof HTMLElement)) return null;
+
+          let sidebar = nav;
+          while (sidebar.parentElement && sidebar.parentElement !== document.body) {
+            const rect = sidebar.getBoundingClientRect();
+            const parentRect = sidebar.parentElement.getBoundingClientRect();
+            const looksLikeSidebar =
+              rect.width >= 180 &&
+              rect.width <= 420 &&
+              rect.height >= Math.max(360, window.innerHeight * 0.55) &&
+              parentRect.width >= rect.width + 320;
+
+            if (looksLikeSidebar) return sidebar;
+            sidebar = sidebar.parentElement;
+          }
+
+          return nav;
+        };
+        const enforceCodexRtlSidebarLeft = () => {
+          const sidebar = findCodexSidebarContainer();
+          if (!(sidebar instanceof HTMLElement)) return false;
+
+          const shell = sidebar.parentElement;
+          if (!(shell instanceof HTMLElement)) return false;
+
+          const rect = sidebar.getBoundingClientRect();
+          const width = Math.max(240, Math.min(420, Math.ceil(rect.width || sidebar.offsetWidth || 288)));
+
+          shell.setAttribute("data-codex-rtl-sidebar-shell", "true");
+          sidebar.setAttribute("data-codex-rtl-sidebar-left", "true");
+
+          setImportant(shell, "display", "flex");
+          setImportant(shell, "flex-direction", "row");
+          setImportant(shell, "direction", "ltr");
+          setImportant(shell, "min-width", "0");
+
+          if (shell.firstElementChild !== sidebar) {
+            shell.insertBefore(sidebar, shell.firstElementChild);
+          }
+
+          setImportant(sidebar, "order", "-999");
+          setImportant(sidebar, "flex", "0 0 " + width + "px");
+          setImportant(sidebar, "width", width + "px");
+          setImportant(sidebar, "min-width", width + "px");
+          setImportant(sidebar, "max-width", width + "px");
+          setImportant(sidebar, "direction", "rtl");
+
+          Array.from(shell.children).forEach((child) => {
+            if (child === sidebar || !(child instanceof HTMLElement)) return;
+            setImportant(child, "order", "0");
+            setImportant(child, "min-width", "0");
+            if (!child.hasAttribute("data-codex-rtl-sidebar-left-spacer")) {
+              setImportant(child, "flex", "1 1 auto");
+            }
+          });
+
+          return true;
+        };
+        const mountCodexRtlStatus = () => {
+          const existing = document.getElementById("codex-rtl-status-widget");
+          if (existing) return;
+
+          const widget = document.createElement("div");
+          widget.id = "codex-rtl-status-widget";
+          widget.setAttribute("role", "status");
+          widget.setAttribute("aria-live", "polite");
+          widget.title = "نسخة RTL مبنية من Codex الرسمي " + sourceVersion + ". التحديث التلقائي مفعّل عند فتح الاختصار.";
+          widget.innerHTML = [
+            '<button class="codex-rtl-status-close" type="button" aria-label="إغلاق تنبيه توافق RTL">×</button>',
+            '<div class="codex-rtl-status-row">',
+            '<span class="codex-rtl-status-dot" aria-hidden="true"></span>',
+            '<span class="codex-rtl-status-title">RTL متوافق</span>',
+            '</div>',
+            '<div class="codex-rtl-status-meta">الرسمي ' + sourceVersion + '</div>',
+            '<div class="codex-rtl-status-meta">تحديث تلقائي عند الفتح</div>',
+            '<div class="codex-rtl-status-meta">مثبت - يغلق يدويًا فقط</div>'
+          ].join("");
+          document.body.appendChild(widget);
+          const close = () => {
+            widget.classList.add("codex-rtl-status-widget-hidden");
+            window.setTimeout(() => widget.remove(), 220);
+          };
+          widget.querySelector(".codex-rtl-status-close")?.addEventListener("click", close);
         };
         applyCodexRtl();
         new MutationObserver(applyCodexRtl).observe(document.documentElement, {
           attributes: true,
           attributeFilter: ["dir", "lang"],
+        });
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", () => {
+            mountCodexRtlStatus();
+            enforceCodexRtlPanelLayout();
+            enforceCodexRtlSidebarLeft();
+          }, { once: true });
+        } else {
+          mountCodexRtlStatus();
+          enforceCodexRtlPanelLayout();
+          enforceCodexRtlSidebarLeft();
+        }
+        let codexRtlLayoutFrames = 0;
+        const enforceForStartup = () => {
+          enforceCodexRtlPanelLayout();
+          enforceCodexRtlSidebarLeft();
+          codexRtlLayoutFrames += 1;
+          if (codexRtlLayoutFrames < 600) window.requestAnimationFrame(enforceForStartup);
+        };
+        window.requestAnimationFrame(enforceForStartup);
+        new MutationObserver(() => {
+          enforceCodexRtlPanelLayout();
+          enforceCodexRtlSidebarLeft();
+        }).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+        window.addEventListener("resize", () => {
+          enforceCodexRtlPanelLayout();
+          enforceCodexRtlSidebarLeft();
         });
       })();
     </script>
@@ -41,10 +202,123 @@ const RTL_INJECTION = String.raw`
         direction: rtl;
       }
 
+      #codex-rtl-status-widget {
+        position: fixed;
+        left: auto;
+        right: 12px;
+        bottom: 16px;
+        z-index: 2147483000;
+        width: 248px;
+        box-sizing: border-box;
+        border: 1px solid color-mix(in srgb, var(--border-light, #3a3a3a) 72%, transparent);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--token-main-surface-primary, #171717) 92%, transparent);
+        color: var(--text-primary, #f4f4f5);
+        box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+        padding: 10px 12px;
+        direction: rtl;
+        text-align: right;
+        unicode-bidi: isolate;
+        pointer-events: auto;
+        font-size: 12px;
+        line-height: 1.45;
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 180ms ease, transform 180ms ease;
+      }
+
+      #codex-rtl-status-widget.codex-rtl-status-widget-hidden {
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+      }
+
+      #codex-rtl-status-widget .codex-rtl-status-close {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-secondary, #a1a1aa);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      #codex-rtl-status-widget .codex-rtl-status-close:hover,
+      #codex-rtl-status-widget .codex-rtl-status-close:focus-visible {
+        background: rgb(255 255 255 / 8%);
+        color: var(--text-primary, #f4f4f5);
+        outline: none;
+      }
+
+      #codex-rtl-status-widget .codex-rtl-status-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      #codex-rtl-status-widget .codex-rtl-status-dot {
+        width: 8px;
+        height: 8px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #22c55e;
+        box-shadow: 0 0 0 3px rgb(34 197 94 / 16%);
+      }
+
+      #codex-rtl-status-widget .codex-rtl-status-title {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 600;
+      }
+
+      #codex-rtl-status-widget .codex-rtl-status-meta {
+        margin-top: 3px;
+        color: var(--text-secondary, #a1a1aa);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       textarea,
       input,
       [contenteditable="true"] {
-        direction: rtl;
+        direction: rtl !important;
+        text-align: right !important;
+        unicode-bidi: plaintext !important;
+      }
+
+      .app-shell-main-content-viewport,
+      .app-shell-main-content-viewport .app-shell-main-content-frame,
+      .app-shell-main-content-viewport [data-app-shell-main-content-layout] {
+        direction: rtl !important;
+        text-align: right;
+        unicode-bidi: isolate;
+      }
+
+      .app-shell-main-content-viewport p,
+      .app-shell-main-content-viewport li,
+      .app-shell-main-content-viewport h1,
+      .app-shell-main-content-viewport h2,
+      .app-shell-main-content-viewport h3,
+      .app-shell-main-content-viewport h4,
+      .app-shell-main-content-viewport h5,
+      .app-shell-main-content-viewport h6,
+      .app-shell-main-content-viewport [data-message-author-role],
+      .app-shell-main-content-viewport [data-testid*="message"],
+      .app-shell-main-content-viewport [class*="prose"] {
+        direction: rtl !important;
         text-align: right;
         unicode-bidi: plaintext;
       }
@@ -118,6 +392,12 @@ const RTL_INJECTION = String.raw`
         direction: ltr;
         unicode-bidi: isolate;
         flex: 0 0 auto;
+      }
+
+      [data-app-shell-focus-area="right-panel"],
+      [data-app-shell-focus-area="right-panel"] * {
+        direction: rtl;
+        unicode-bidi: isolate;
       }
 
       .h-toolbar-pane:has(.group\/address-bar),
@@ -342,7 +622,7 @@ function parseAsar(buffer) {
   const headerEnd = headerStart + headerSize;
   return {
     header: JSON.parse(buffer.slice(headerStart, headerEnd).toString("utf8")),
-    dataOffset: headerEnd,
+    dataOffset: 8 + buffer.readUInt32LE(4),
   };
 }
 
@@ -403,6 +683,24 @@ function injectRtl(html) {
   return withBootPatch.replace("</head>", `${RTL_INJECTION}\n  </head>`);
 }
 
+function patchDirectiveParser(source) {
+  const original = "function cx(e){let t=[];return ux(Kb(e,void 0),t),R.debug(`[parseDirectives] directives found`,{safe:{directiveCount:t.length,directiveNames:t.map(e=>e.name).join(`,`)},sensitive:{}}),t}";
+  const replacement = "function cx(e){let t=[];try{ux(Kb(e,void 0),t)}catch(e){return R.debug(`[parseDirectives] directive parse failed`,{safe:{},sensitive:{error:String(e)}}),[]}return R.debug(`[parseDirectives] directives found`,{safe:{directiveCount:t.length,directiveNames:t.map(e=>e.name).join(`,`)},sensitive:{}}),t}";
+
+  if (source.includes(original)) {
+    return source.replace(original, replacement);
+  }
+
+  return source.replace(
+    /function ([A-Za-z_$][\w$]*)\(e\)\{let t=\[\];return ([A-Za-z_$][\w$]*)\(([A-Za-z_$][\w$]*)\(e,void 0\),t\),R\.debug\(`\[parseDirectives\] directives found`,\{safe:\{directiveCount:t\.length,directiveNames:t\.map\(e=>e\.name\)\.join\(`,`\)\},sensitive:\{\}\}\),t\}/,
+    "function $1(e){let t=[];try{$2($3(e,void 0),t)}catch(e){return R.debug(`[parseDirectives] directive parse failed`,{safe:{},sensitive:{error:String(e)}}),[]}return R.debug(`[parseDirectives] directives found`,{safe:{directiveCount:t.length,directiveNames:t.map(e=>e.name).join(`,`)},sensitive:{}}),t}",
+  );
+}
+
+function patchAppShellRightPanelOrder(source) {
+  return source;
+}
+
 async function rebuildAsar(sourceAsar, targetAsar) {
   const source = await readFile(sourceAsar);
   const { header, dataOffset } = parseAsar(source);
@@ -417,6 +715,12 @@ async function rebuildAsar(sourceAsar, targetAsar) {
     if (filePath === TARGET) {
       content = Buffer.from(injectRtl(original.toString("utf8")), "utf8");
       updateIntegrity(entry, content);
+    } else if (filePath.endsWith(".js")) {
+      const patched = patchAppShellRightPanelOrder(patchDirectiveParser(original.toString("utf8")));
+      if (patched !== original.toString("utf8")) {
+        content = Buffer.from(patched, "utf8");
+        updateIntegrity(entry, content);
+      }
     }
 
     entry.size = content.length;
@@ -425,13 +729,19 @@ async function rebuildAsar(sourceAsar, targetAsar) {
   });
 
   const headerBuffer = Buffer.from(JSON.stringify(header), "utf8");
+  const headerPadding = Buffer.alloc((4 - (headerBuffer.length % 4)) % 4);
   const prefix = Buffer.alloc(16);
   prefix.writeUInt32LE(4, 0);
-  prefix.writeUInt32LE(headerBuffer.length + 8, 4);
-  prefix.writeUInt32LE(headerBuffer.length + 4, 8);
+  prefix.writeUInt32LE(headerBuffer.length + headerPadding.length + 8, 4);
+  prefix.writeUInt32LE(headerBuffer.length + headerPadding.length + 4, 8);
   prefix.writeUInt32LE(headerBuffer.length, 12);
 
-  await writeFile(targetAsar, Buffer.concat([prefix, headerBuffer, ...files.map((file) => file.content)]));
+  await writeFile(targetAsar, Buffer.concat([
+    prefix,
+    headerBuffer,
+    headerPadding,
+    ...files.map((file) => file.content),
+  ]));
   return sha256Hex(headerBuffer);
 }
 
